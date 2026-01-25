@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cardium AI - Advanced Heart Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --high-risk: #dc3545;
+            --med-risk: #ffc107;
+            --low-risk: #28a745;
+            --primary-blue: #4a90e2;
+        }
+        body { background:#f0f2f5; font-family: 'Segoe UI', sans-serif; color: #333; }
+        .report-card { border-radius: 0; border: none; background: white; min-height: 100vh; }
+        
+        /* Top Navigation */
+        .top-nav { background: white; padding: 12px 40px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Dynamic Banner */
+        .risk-banner { padding: 40px; text-align: center; color: white; transition: all 0.5s ease; }
+        .bg-low { background: var(--low-risk); }
+        .bg-medium { background: var(--med-risk); color: #222 !important; }
+        .bg-high { background: var(--high-risk); }
+
+        /* Floating Info Bar */
+        .info-bar { display: grid; grid-template-columns: repeat(3, 1fr); background: #f8f9fa; border-bottom: 1px solid #eee; }
+        .info-box { padding: 20px; text-align: center; border-right: 1px solid #eee; }
+        .info-box small { display: block; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; color: #777; margin-bottom: 5px; }
+        .info-box b { font-size: 1.1rem; font-weight: 600; }
+
+        /* Main Content */
+        .content-body { padding: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; }
+        
+        /* Probability Highlight */
+        .prob-container { background: var(--primary-blue); color: white; padding: 40px; border-radius: 15px; text-align: center; margin: 30px 0; box-shadow: 0 10px 20px rgba(74,144,226,0.2); }
+        .prob-container h1 { font-size: 3.5rem; font-weight: 800; margin: 0; }
+        
+        /* Advanced Features */
+        .status-chip { font-size: 0.75rem; padding: 6px 15px; border-radius: 50px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .observation-box { background: #f8faff; border-left: 5px solid var(--primary-blue); padding: 20px; border-radius: 0 8px 8px 0; }
+        
+        /* Lists & Tables */
+        .status-list { list-style: none; padding: 0; }
+        .status-list li { margin-bottom: 15px; display: flex; align-items: flex-start; gap: 12px; font-size: 0.95rem; }
+        .status-list i { margin-top: 4px; }
+        
+        .table { font-size: 0.9rem; }
+        .table-dark { background: #222 !important; }
+
+        @media (max-width: 992px) { .content-body { grid-template-columns: 1fr; } }
+        @media print { .no-print { display: none; } body { background: white; } }
+    </style>
+</head>
+<body>
+
+<div class="container p-0">
+    <div class="report-card shadow-lg" id="printableReport">
+        <div class="top-nav">
+            <div class="d-flex align-items-center">
+                <img src="assets/cardium-logo.jpg" width="45" class="me-3" onerror="this.src='https://via.placeholder.com/45'">
+                <div>
+                    <h5 class="mb-0 fw-bold">Cardium AI Health</h5>
+                    <small class="text-muted">Smart Diagnostic Report</small>
+                </div>
+            </div>
+            <div class="no-print">
+                <button onclick="window.print()" class="btn btn-sm btn-outline-dark"><i class="fas fa-print me-1"></i> Print</button>
+            </div>
+        </div>
+
+        <div id="headerBanner" class="risk-banner">
+            <h1 id="title" class="fw-bold mb-2">Analyzing Data...</h1>
+            <p id="subtitle" class="opacity-90 mb-0"></p>
+        </div>
+
+        <div class="info-bar">
+            <div class="info-box"><small>Patient Name</small><b id="pName">---</b></div>
+            <div class="info-box"><small>Clinical Hospital</small><b id="pHospital">---</b></div>
+            <div class="info-box"><small>Report Generated</small><b id="pDate">---</b></div>
+        </div>
+
+        <div class="content-body">
+            <div>
+                <div class="d-flex gap-2 mb-4">
+                    <span class="status-chip bg-light border"><i class="fas fa-robot text-primary"></i> AI Verified</span>
+                    <span id="clinicalChip" class="status-chip"></span>
+                </div>
+
+                <div class="meter-section mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold small">Risk Assessment Meter</span>
+                        <span id="riskLabel" class="fw-bold small"></span>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div id="riskBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
+                    </div>
+                </div>
+
+                <div class="prob-container">
+                    <h1 id="probabilityText">0%</h1>
+                    <p class="mb-0 fw-bold text-uppercase small opacity-80">Probability of Heart Stroke Risk</p>
+                </div>
+
+                <div class="mt-5">
+                    <h6 class="fw-bold border-bottom pb-2 mb-3">Diagnostic Input Breakdown</h6>
+                    <table class="table table-hover">
+                        <thead class="table-light"><tr><th>Parameter</th><th>Value</th></tr></thead>
+                        <tbody>
+                            <tr><td>Biological Sex</td><td id="s_sex">--</td></tr>
+                            <tr><td>Fasting Blood Sugar</td><td id="s_sugar">--</td></tr>
+                            <tr><td>ST Depression (Oldpeak)</td><td id="s_oldpeak">--</td></tr>
+                            <tr><td>Exercise Induced Angina</td><td id="s_angina">--</td></tr>
+                            <tr class="table-dark"><th>Computed Risk Points</th><td id="s_total">--</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <section class="mb-5">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-file-medical-alt text-primary me-2"></i>What This Means</h6>
+                    <div class="p-4 border rounded shadow-sm">
+                        <ul id="summaryList" class="status-list"></ul>
+                        <div class="observation-box mt-4">
+                            <h6 class="fw-bold small">Advanced Observation:</h6>
+                            <p id="observationText" class="small mb-0 text-muted"></p>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h6 class="fw-bold mb-3"><i class="fas fa-clipboard-check text-success me-2"></i>Recommended Actions</h6>
+                    <ul id="actionList" class="status-list"></ul>
+                </section>
+
+                <div class="alert alert-warning mt-5 small">
+                    <i class="fas fa-info-circle me-2"></i> <b>Disclaimer:</b> This AI-generated report is for screening purposes only. Please consult a cardiologist for clinical diagnosis.
+                </div>
+
+                <div class="mt-4 no-print d-flex gap-2">
+                    <a href="html.html" class="btn btn-primary flex-grow-1 py-2">New Assessment</a>
+                    <a href="index.html" class="btn btn-outline-secondary flex-grow-1 py-2">Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.onload = function() {
+    // 1. Data Retrieval
+    const prob = parseInt(localStorage.getItem("finalProbability")) || 0;
+    const name = localStorage.getItem("patientName") || "Patient";
+    const hospital = localStorage.getItem("hospitalName") || "General Hospital";
+
+    // 2. DOM Elements
+    document.getElementById("pName").innerText = name;
+    document.getElementById("pHospital").innerText = hospital;
+    document.getElementById("pDate").innerText = new Date().toLocaleString('en-IN');
+
+    const banner = document.getElementById("headerBanner");
+    const title = document.getElementById("title");
+    const subtitle = document.getElementById("subtitle");
+    const pText = document.getElementById("probabilityText");
+    const rBar = document.getElementById("riskBar");
+    const rLabel = document.getElementById("riskLabel");
+    const chip = document.getElementById("clinicalChip");
+    const obs = document.getElementById("observationText");
+
+    const updateList = (id, items, color) => {
+        document.getElementById(id).innerHTML = items.map(i => 
+            `<li><i class="fas fa-check-circle text-${color}"></i><div>${i}</div></li>`).join("");
+    };
+
+    // 3. Dynamic UI Logic
+    pText.innerText = prob + "%";
+    rBar.style.width = prob + "%";
+
+    if (prob > 50) {
+        // HIGH RISK
+        banner.className = "risk-banner bg-high";
+        title.innerHTML = '<i class="fas fa-radiation-alt me-2"></i>High Risk Detected';
+        subtitle.innerText = "Critical indicators identified. Immediate clinical consultation required.";
+        rBar.style.backgroundColor = "#dc3545";
+        rLabel.innerText = "HIGH RISK ZONE";
+        chip.className = "status-chip bg-danger-subtle text-danger";
+        chip.innerText = "Critical Alert";
+        obs.innerText = "Model indicates significant abnormalities in ST-slope and heart rate patterns typical of ischemia.";
+        updateList("summaryList", ["Abnormal ECG Pattern", "High Cardiovascular Load", "Irregular ST Recovery"], "danger");
+        updateList("actionList", ["Consult a Cardiologist Immediately", "Undergo Treadmill Test (TMT)", "Restricted Physical Activity"], "danger");
+
+    } else if (prob > 15) {
+        // MODERATE RISK (Matches 16% in your image)
+        banner.className = "risk-banner bg-medium";
+        title.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Moderate Risk Detected';
+        subtitle.innerText = "Elevated risk patterns observed. Preventive measures advised.";
+        rBar.style.backgroundColor = "#ffc107";
+        rLabel.innerText = "MODERATE RISK ZONE";
+        chip.className = "status-chip bg-warning-subtle text-dark";
+        chip.innerText = "Monitoring Advised";
+        obs.innerText = "The 16% probability suggests early stage indicators. Minor irregularities in fasting sugar or oldpeak detected.";
+        updateList("summaryList", ["Borderline Heart Metrics", "Metabolic Stress Noted", "Normal but Tense ECG"], "warning");
+        updateList("actionList", ["Schedule Routine Heart Check-up", "Adopt Low-Sodium Diet", "30 mins Cardio Daily"], "warning");
+
+    } else {
+        // LOW RISK
+        banner.className = "risk-banner bg-low";
+        title.innerHTML = '<i class="fas fa-heartbeat me-2"></i>Optimal Heart Health';
+        subtitle.innerText = "Indicators are within normal clinical ranges.";
+        rBar.style.backgroundColor = "#28a745";
+        rLabel.innerText = "STABLE ZONE";
+        chip.className = "status-chip bg-success-subtle text-success";
+        chip.innerText = "Stable Profile";
+        obs.innerText = "Metrics match healthy heart benchmarks in the AI dataset with high confidence.";
+        updateList("summaryList", ["Normal Resting Heart Rate", "Stable Sugar Profile", "Clean ST Recovery"], "success");
+        updateList("actionList", ["Maintain Balanced Diet", "Annual Health Screening", "Regular Fitness Routine"], "success");
+    }
+
+    // 4. Data Table Sync
+    document.getElementById("s_sex").innerText = localStorage.getItem("score_sex") || "Male";
+    document.getElementById("s_sugar").innerText = localStorage.getItem("score_sugar") === "1" ? "High" : "Normal";
+    document.getElementById("s_oldpeak").innerText = localStorage.getItem("score_oldpeak") || "0.0";
+    document.getElementById("s_angina").innerText = localStorage.getItem("score_angina") === "1" ? "Yes" : "No";
+    document.getElementById("s_total").innerText = localStorage.getItem("totalRiskPoints") || "0";
+};
+
+</script>
+<div id="aiChatWrapper" class="no-print" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+    <button onclick="toggleChat()" class="btn btn-primary rounded-circle shadow-lg" style="width: 60px; height: 60px;">
+        <i class="fas fa-robot fs-4"></i>
+    </button>
+
+    <div id="chatWindow" class="card shadow-lg d-none" style="position: absolute; bottom: 80px; right: 0; width: 350px; border-radius: 15px; overflow: hidden;">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="fas fa-comment-medical me-2"></i>AI Medical Assistant</span>
+            <button onclick="toggleChat()" class="btn-close btn-close-white"></button>
+        </div>
+        <div id="chatBody" class="card-body" style="height: 300px; overflow-y: auto; background: #f8f9fa; font-size: 0.9rem;">
+            <div class="text-muted small mb-3">Hi! I can explain your heart risk factors. Ask me anything about your report.</div>
+        </div>
+        <div class="card-footer bg-white border-top">
+            <div class="input-group">
+                <input type="text" id="userInput" class="form-control form-control-sm" placeholder="Ask about your 16% risk...">
+                <button onclick="sendMessage()" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 2. Chat UI Logic
+function toggleChat() {
+    document.getElementById('chatWindow').classList.toggle('d-none');
+}
+
+// 3. AI API Integration (Placeholder)
+async function sendMessage() {
+    const input = document.getElementById('userInput');
+    const chatBody = document.getElementById('chatBody');
+    const message = input.value.trim();
+    const prob = localStorage.getItem("finalProbability") || "0";
+
+    if (!message) return;
+
+    // User Message
+    chatBody.innerHTML += `<div class="text-end mb-2"><span class="bg-primary text-white p-2 rounded d-inline-block">${message}</span></div>`;
+    input.value = '';
+
+    // AI Typing Indicator
+    const typingId = "typing-" + Date.now();
+    chatBody.innerHTML += `<div id="${typingId}" class="text-start mb-2"><span class="bg-light p-2 rounded d-inline-block">AI is thinking...</span></div>`;
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    try {
+        /* Yahan aap apni API call karenge. 
+           Example context pass karein: "Patient has ${prob}% risk."
+        */
+        const response = await fetch('AIzaSyD6c3-1JCSsYYaS65gtlxHNDmUjBbc9WFI', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                prompt: `The patient has a heart risk probability of ${prob}%. Their question is: ${message}`,
+                context: localStorage.getItem("medicalData") // Firestore data pass karein
+            })
+        });
+        
+        const data = await response.json();
+        document.getElementById(typingId).innerHTML = `<span class="bg-white border p-2 rounded d-inline-block">${data.reply}</span>`;
+    } catch (error) {
+        document.getElementById(typingId).innerHTML = `<span class="bg-danger-subtle text-danger p-2 rounded d-inline-block">Sorry, I'm having trouble connecting to AI.</span>`;
+    }
+}
+const API_KEY = "AIzaSyD6c3-1JCSsYYaS65gtlxHNDmUjBbc9WFI"; // Aapki Key
+
+async function sendMessage() {
+    const input = document.getElementById('userInput');
+    const chatBody = document.getElementById('chatBody');
+    const message = input.value.trim();
+    
+    // Report ka data uthana context ke liye
+    const prob = localStorage.getItem("finalProbability") || "0";
+    const age = localStorage.getItem("score_age") || "N/A";
+    const oldpeak = localStorage.getItem("score_oldpeak") || "0";
+
+    if (!message) return;
+
+    // User message dikhana
+    chatBody.innerHTML += `<div class="text-end mb-2"><span class="bg-primary text-white p-2 rounded d-inline-block shadow-sm" style="max-width:80%">${message}</span></div>`;
+    input.value = '';
+
+    // Thinking indicator
+    const typingId = "typing-" + Date.now();
+    chatBody.innerHTML += `<div id="${typingId}" class="text-start mb-2"><span class="bg-light p-2 rounded d-inline-block border">AI is analyzing your report...</span></div>`;
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: `You are a medical assistant. The patient's heart stroke risk is ${prob}%. 
+                        Patient details: Age ${age}, ST Depression ${oldpeak}. 
+                        If risk is around 16%, it's Moderate. Answer this question briefly: ${message}`
+                    }]
+                }]
+            })
+        });
+
+        const data = await response.json();
+        const aiReply = data.candidates[0].content.parts[0].text;
+        
+        document.getElementById(typingId).innerHTML = `<span class="bg-white border p-2 rounded d-inline-block shadow-sm" style="max-width:85%">${aiReply}</span>`;
+    } catch (error) {
+        document.getElementById(typingId).innerHTML = `<span class="text-danger small">Error: Could not connect to Gemini AI. Check your API Key.</span>`;
+    }
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
+</script>
+
+</body>
+</html>

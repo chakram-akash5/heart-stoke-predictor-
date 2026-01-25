@@ -1,0 +1,9 @@
+venv/
+node_modules/
+.firebase/
+firebase.json
+.firestore/
+.firebaserc
+.git/
+__pycache__/
+*.pyc
