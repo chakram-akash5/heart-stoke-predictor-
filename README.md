@@ -17,3 +17,13 @@ This is my personal/college website project hosted using **Firebase** and manage
   
 
 ## 📂 Project Structure
+
+/public
+  ├── index.html
+  ├── style.css
+  ├── script.js
+  ├── trained ml.py
+  ├── app.py
+  
+
+
