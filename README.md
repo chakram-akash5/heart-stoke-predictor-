@@ -24,6 +24,11 @@ This is my personal/college website project hosted using **Firebase** and manage
   ├── script.js
   ├── trained ml.py
   ├── app.py
+## Project Link 
+https://heartpredictor-fa5fe.web.app
+
+
+  
   
 
 
