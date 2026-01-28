@@ -1,13 +1,14 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import joblib
 import numpy as np
 import os
 
-app = Flask(__name__)
+# 1️⃣ App init
+app = Flask(__name__, static_folder="static")
 CORS(app)
 
-# Load both the model and the scaler created by train_model.py
+# 2️⃣ Load model & scaler
 if os.path.exists("stroke_model.pkl") and os.path.exists("scaler.pkl"):
     model = joblib.load("stroke_model.pkl")
     scaler = joblib.load("scaler.pkl")
@@ -15,41 +16,49 @@ if os.path.exists("stroke_model.pkl") and os.path.exists("scaler.pkl"):
 else:
     model = None
     scaler = None
-    print("⚠️ Error: .pkl files missing. Run train_model.py first.")
+    print("⚠️ Model or scaler missing")
 
-@app.route('/ml-predict', methods=['POST'])
+# 3️⃣ Root health check
+@app.route("/")
+def root():
+    return jsonify({
+        "status": "OK",
+        "message": "Heart Stroke Predictor API running",
+        "endpoint": "/ml-predict"
+    })
+
+# 4️⃣ UI route
+@app.route("/ui")
+def ui():
+    return send_from_directory("static", "index.html")
+
+# 5️⃣ Prediction API
+@app.route("/ml-predict", methods=["POST"])
 def predict():
-    if not model or not scaler:
+    if model is None or scaler is None:
         return jsonify({"error": "Model not trained"}), 500
+
     try:
         data = request.json
-        # The order MUST match the training script: age, sex, cp, fbs, exang, oldpeak, slope
-        raw_features = np.array([[
-            float(data.get('age', 0)),
-            float(data.get('sex', 0)),
-            float(data.get('chestPain', 0)),
-            float(data.get('sugar', 0)),
-            float(data.get('angina', 0)),
-            float(data.get('oldPeak', 0)),
-            float(data.get('stSlope', 0))
+
+        raw_features = np.array([[  
+            float(data.get("age", 0)),
+            float(data.get("sex", 0)),
+            float(data.get("chestPain", 0)),
+            float(data.get("sugar", 0)),
+            float(data.get("angina", 0)),
+            float(data.get("oldPeak", 0)),
+            float(data.get("stSlope", 0))
         ]])
-        
-        # 1. Scale input to match training distribution
-        scaled_features = scaler.transform(raw_features)
-        # 2. Get true probability
-        probability = model.predict_proba(scaled_features)[0][1]
+
+        scaled = scaler.transform(raw_features)
+        probability = model.predict_proba(scaled)[0][1]
 
         return jsonify({"probability": float(probability)})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-if __name__ == '__main__':
+# 6️⃣ Run
+if __name__ == "__main__":
     app.run()
-
-@app.route("/")
-def home():
-    return {
-        "status": "OK",
-        "message": "Heart Stroke Predictor API is running",
-        "endpoint": "/ml-predict"
-    }
