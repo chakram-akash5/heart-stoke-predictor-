@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, render_template
 from flask_cors import CORS
 import joblib
 import numpy as np
@@ -58,6 +58,12 @@ def predict():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+    from flask import render_template
+
+@app.route("/ui")
+def ui():
+    return render_template("index.html")
+
 
 # 6️⃣ Run
 if __name__ == "__main__":
