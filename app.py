@@ -53,3 +53,9 @@ def home():
         "message": "Heart Stroke Predictor API is running",
         "endpoint": "/ml-predict"
     }
+
+from flask import render_template
+
+@app.route("/")
+def home():
+    return render_template("index.html")
