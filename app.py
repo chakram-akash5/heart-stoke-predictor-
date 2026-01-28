@@ -27,10 +27,7 @@ def root():
         "endpoint": "/ml-predict"
     })
 
-# 4️⃣ UI route
-@app.route("/ui")
-def ui():
-    return send_from_directory("static", "index.html")
+
 
 # 5️⃣ Prediction API
 @app.route("/ml-predict", methods=["POST"])
