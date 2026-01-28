@@ -45,3 +45,11 @@ def predict():
 
 if __name__ == '__main__':
     app.run()
+
+@app.route("/")
+def home():
+    return {
+        "status": "OK",
+        "message": "Heart Stroke Predictor API is running",
+        "endpoint": "/ml-predict"
+    }
