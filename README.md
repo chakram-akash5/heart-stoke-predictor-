@@ -7,7 +7,7 @@ This project includes a Flask backend (ML API) and a web UI served from the same
 - Clean UI
 - Fast loading
 - Hosted on Firebase
- - Flask API for ML predictions
+- Flask API for ML predictions
 
 ## 🛠️ Built With
 - HTML
@@ -35,6 +35,11 @@ python app.py
 ```
 Then open:
 - UI: http://127.0.0.1:5000/
+- Prediction form: http://127.0.0.1:5000/html.html
+- Patient intake: http://127.0.0.1:5000/patient.html
+- Doctor dashboard: http://127.0.0.1:5000/dashboard.html
+- Analytics: http://127.0.0.1:5000/analytics.html
+- Results page: http://127.0.0.1:5000/result.html
 - Health check: http://127.0.0.1:5000/api/health
 - API: http://127.0.0.1:5000/ml-predict
 
@@ -47,4 +52,3 @@ https://heartpredictor-fa5fe.web.app
 
   
   
-
