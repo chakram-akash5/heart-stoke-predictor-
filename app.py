@@ -1,11 +1,11 @@
-from flask import Flask, request, jsonify, send_from_directory, render_template
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import joblib
 import numpy as np
 import os
 
 # 1️⃣ App init
-app = Flask(__name__, static_folder="static")
+app = Flask(__name__, static_folder="static", template_folder="templates")
 CORS(app)
 
 # 2️⃣ Load model & scaler
@@ -18,9 +18,15 @@ else:
     scaler = None
     print("⚠️ Model or scaler missing")
 
-# 3️⃣ Root health check
+# 3️⃣ Root UI
 @app.route("/")
 def root():
+    return render_template("index.html")
+
+
+# 4️⃣ Health check
+@app.route("/api/health")
+def health():
     return jsonify({
         "status": "OK",
         "message": "Heart Stroke Predictor API running",
@@ -55,14 +61,8 @@ def predict():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-    from flask import render_template
-
-@app.route("/ui")
-def ui():
-    return render_template("index.html")
 
 
 # 6️⃣ Run
 if __name__ == "__main__":
     app.run()
-

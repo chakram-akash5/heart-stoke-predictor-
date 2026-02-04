@@ -56,7 +56,7 @@ window.calculateRisk = function () {
     };
 
     // 3. Fetch Prediction from Flask
-    fetch("http://127.0.0.1:5000/ml-predict", {
+    fetch("/ml-predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(mlData)
