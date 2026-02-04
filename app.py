@@ -1,12 +1,28 @@
-from flask import Flask, request, jsonify, send_from_directory, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory, abort
 from flask_cors import CORS
 import joblib
 import numpy as np
 import os
 
 # 1️⃣ App init
-app = Flask(__name__, static_folder="static")
+app = Flask(__name__, static_folder="static", template_folder="templates")
 CORS(app)
+
+ALLOWED_PAGES = {
+    "html": "html.html",
+    "dashboard": "dashboard.html",
+    "analytics": "analytics.html",
+    "patient": "patient.html",
+    "result": "result.html",
+}
+
+ALLOWED_ROOT_FILES = {
+    "script.js",
+    "dashboard.js",
+    "analytics.js",
+    "history.js",
+    "css.css",
+}
 
 # 2️⃣ Load model & scaler
 if os.path.exists("stroke_model.pkl") and os.path.exists("scaler.pkl"):
@@ -18,14 +34,42 @@ else:
     scaler = None
     print("⚠️ Model or scaler missing")
 
-# 3️⃣ Root health check
+# 3️⃣ Root UI
 @app.route("/")
 def root():
+    return render_template("index.html")
+
+
+# 4️⃣ Health check
+@app.route("/api/health")
+def health():
     return jsonify({
         "status": "OK",
         "message": "Heart Stroke Predictor API running",
         "endpoint": "/ml-predict"
     })
+
+
+# 4️⃣ HTML pages (served from templates)
+@app.route("/<page>.html")
+def html_pages(page):
+    template_name = ALLOWED_PAGES.get(page)
+    if template_name is None:
+        abort(404)
+    return render_template(template_name)
+
+
+@app.route("/assets/<path:filename>")
+def assets_files(filename):
+    return send_from_directory(os.path.join(app.root_path, "assets"), filename)
+
+
+# 4️⃣ Root-level static files (JS/CSS)
+@app.route("/<path:filename>")
+def root_files(filename):
+    if filename in ALLOWED_ROOT_FILES:
+        return send_from_directory(app.root_path, filename)
+    abort(404)
 
 
 
@@ -55,14 +99,8 @@ def predict():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-    from flask import render_template
-
-@app.route("/ui")
-def ui():
-    return render_template("index.html")
 
 
 # 6️⃣ Run
 if __name__ == "__main__":
     app.run()
-
