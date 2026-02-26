@@ -47,7 +47,7 @@ Then open:
 - **Build command:** `pip install -r requirements.txt`
 - **Start command:** `gunicorn app:app`
 ## Project Link 
-https://heartpredictor-fa5fe.web.app
+https://heart-stoke-predictor-2.onrender.com/result.html
 
 
   
